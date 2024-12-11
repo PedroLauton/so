@@ -1,0 +1,280 @@
+Alphagty{
+  ==============================
+  Ajustar memória de vídeo: 16MB
+  ==============================
+
+  ==============================
+  Usuário: root
+  Senha ifsp@123
+  ==============================
+
+  ==============================
+  Resumo das placas de rede: $ ip a
+  Ping: ping localhost (retorna IPv6)                         Rede Interna
+  Edição da interface de rede: vim /etc/network/interfaces -> auto enp0s8
+							      iface enp0s8
+						                 address 192.168.20.101/24
+                                                            
+                                                              Rede Externa
+						              auto enp0s3
+							      iface enp0s3 inet dhcp
+
+  systemctl restart networking
+  vim /etc/hostname (Trocar por nome da máquina)
+  reboot
+  exit
+  ==============================
+}
+
+OperaAlpha{
+  ==============================
+  Usuário: root
+  Senha ifsp@2023
+  ==============================
+
+  ==============================
+  No VMBox: habilitar adaptador 2
+	    Rede interna
+            Intel 1000/server
+
+  ip a
+  vim /etc/network/interfaces - > auto enp0s8
+                                  iface enp0s8 inet static
+                                      address 192.168.20.151/24 (Trocar para o Ip do exercício) 
+                                      gateway 192.168.20.101 (Trocar para o Ip do exercício)
+  systemctl restart networking
+  vim/etc/hostname (Trocar pelo nome da máquina)
+  reboot
+
+  dpkg -l | grep ssh
+  ssh sysadmin@(endereço ip das máquinas)
+  ==============================
+}
+
+AlphaFiles{
+  ==============================
+  Usuário: root
+  Senha ifsp@2022
+  ==============================
+
+  ==============================
+  ip a
+  nano /etc/network/interfaces -> comentar o dhcp
+				  descomentar o static com o address e gateway
+                                  trocar allow-hotplug por auto
+                                      address 192.168.20.102 (Trocar para o Ip do exercício)
+                                      gateway 192.168.20.101 (Trocar para o Ip do exercício)
+
+  systemctl restart networking
+  nano /etc/hostname (trocar por nome da máquina)
+  reboot
+  ==============================
+}
+
+OperaAlpha{
+  ==============================
+  ping nos ips das máquinas
+  ==============================
+}
+
+AlphaFiles{
+  ==============================
+  poweroff
+  ==============================
+}
+
+Alphagty (Por login no OperaAlpha. A partir daqui operar os servidores pelo OperaAlpha){
+  ==============================
+  su -
+  passwd: ifsp@2022
+  ping -c 2 4.2.2.2
+  ping -c 1 www.uol.com.br
+  ==============================
+
+  ==============================
+  git clone https://github.com/flrobson77/servidores.git
+  cd servidores/
+  mkdir /etc/firewall
+  cd /etc/firewall
+  cp /root/servidores/gateway/firewall/internet.sh .
+  ==============================
+
+  ==============================
+  vim internet.sh -> ETH: Mudar para a placa de rede externa do Alphagty
+		     LAN: 192.168.20.0/24 (Trocar para a rede da OmegaCorp)
+  ls -s /etc/firewall/internet.sh /usr/local/sbin/internet
+  internet start
+  ==============================
+}
+
+AlphaFile{
+  ==============================
+  ping -c 2 4.2.2.2
+  ping-c 1 www.uol.com.br
+  ==============================
+
+  ==============================
+  cat /etc/apt/sources.list
+  apt update
+  apt install -y ssh
+  ss -nltp
+  systemctl status ssh
+  ==============================
+}
+
+OperaAlpha{
+  ==============================
+  ssh sysadmin@(ip alphafile)
+  ==============================
+}
+
+Alphagty{
+  ==============================
+  apt install -y ntp ntpdate
+  mkdir -p /srv/alphacorp/ti/configbkp 
+  cp /etc/ntp.conf /srv/alphacorp/ti/configbkp
+  diff /etc/ntp.conf /srv/alphacorp/ti/configbkp/ntp.conf
+  shalsum /etc/ntp.conf
+  shalsum /srv/alphacorp/ti/configbkp/ntp.confi
+  ntpdate -u pool.ntp.br
+  ==============================
+  
+  ==============================
+  cd
+  cd servidores/gateway
+  vim ntp.conf
+  linha 50: restrict 192.168.20.0 (Ip da rede)
+  cat ntp.conf > /etc/ntp.conf
+  systemctl restart ntp
+  systemctl status ntp
+  ==============================
+}
+
+AlphaFiles{
+  ==============================
+  poweroff
+  ==============================
+}
+
+Alphagty{
+  ==============================
+  internet stop
+  poweroff
+  ==============================
+}
+
+OperaAlpha{
+  ==============================
+  poweroff
+  ==============================
+}
+
+Alphagty{
+  ==============================
+  su -
+  ntpdate -u pool.ntp.br
+  apt install -y bind9 bind9utils dnsutils
+  ss -nlup
+  ==============================
+  
+  ==============================  
+  dig www.uol.com.br
+  dig @192.168.20.101 www.uol.com.br
+  cd /servidores/etc
+  vim inventario.txt
+  mudar o nome do servidor -> alphagty
+  alterar os IPs e nome dos servidores (192.168.20.101 gateway.alphacorp.br alphagty - Alterar para as máquinas do exercício)
+  alterar Operação para a máquina de operacao	(192.168.20.102 operacao.alphacorp.br operaalpha)
+  scp inventario.txt sysadmin@192.168.20.151:/home/sysadmin
+  scp inventario.txt sysadmin@192.168.20.102:/home/sysadmin
+  ==============================
+
+  ==============================
+  cat issue
+  cat /etc/motd
+  ==============================
+}
+
+OperaAlpha{
+  ==============================
+  mkdir -p /srv/alphacorp/oldconfg
+  cp /etc/hosts /srv/alhpacorp/oldconfig
+  cat /home/sysamdin/inventario.txt > /etc/hosts
+  vim /etc/hosts
+  mudar o nome para operalpha (Nome da máquina no exercício)
+  ==============================
+
+  ==============================
+  VMBox -> rede -> adaptador1 -> avançado -> desconcetar o cabo de rede
+  systemctl restart networking
+  echo nameserver 192.168.20.101 (substituir pelo Id do gateway) > /etc/resolv.conf
+  charttr +i /etc/resolv.conf
+  ==============================
+}
+
+AlphaFile{
+  ==============================
+  su -
+  cat /home/sysamdin/inventario.txt > /etc/hosts
+  nano /etc/hosts (Mudar o nome do servidor)
+  ==============================
+}
+
+Aplhagty{
+  ==============================
+  scp ntp.conf sysadmin@192.168.20.102:/home/sysadmin
+  scp ntp.conf sysadmin@192.168.20.151:/home/sysadmin
+  ==============================
+}
+
+Alphafile{
+  ==============================
+  apt install -y ntp
+  echo nameserver 192.168.20.101 (Trocar pelo Id do gateway) > /etc/resolv.conf
+  chattr +i /etc/resolv.conf
+  ==============================
+
+  ==============================
+  cat /home/sysadmin/ntp.conf > /etc/ntp.conf
+  nano /etc/ntp.conf
+  Linha 17: server 192.168.20.101 iburst prefer
+  systemctl restart ntp
+  ==============================
+}
+
+OperaAlpha{
+  ==============================
+  ssh 192.168.20.102
+  ls .ssh/
+  cat .ssh/known_hosts 
+  ssh-keygen -t rsa -b 2048 -C sysadmin@operacao.alphacorp.br
+  ls .ssh/
+  ssh-copy-id -i ~/.ssh/id_rsa.pub "sysadmin@alphagty"
+  ==============================
+}
+
+Alphagty{
+  ==============================
+  su - 
+  apt update
+  apt install -y figlet
+  figlet robson
+  cd servidores/etc figlet alphacorp >> issue
+  vim isseu
+  cat issue > /etc/issue
+  figlet alphacorp >> motd
+  nano motd
+  cat motd > /etc/motd
+  cd ../etc
+  ==============================
+
+  ==============================
+  nano sshd.config
+  cp /srv/ssh/sshd_config /srv/alphacorp/ti
+  cat sshd_config > /etc/ssh/sshd_config
+  vim /etc/ssh/sshd_config (Trocar o Ip no ListeAddress pelo IP da máquina; Colocar 'no' no passwordAuthentication)
+  ss -nltp
+  systemctl restart ssh
+  systemctl status ssh
+  ==============================
+}
